@@ -1,75 +1,148 @@
-Password Validator
+Password Validator 🔐
+Description 📜
+This project is a password validation system designed to ensure users adhere to secure password practices. 
+It includes functionality for validating password strength, enforcing password expiration, preventing password reuse, and locking accounts after multiple 
+failed login attempts. The system uses an SQLite database to securely store user credentials and track login attempt data, including the number of failed 
+attempts and account lock status.
 
-Description
+Features ⚙️
 
-This project is a password validation system that allows users to register and log in with secure password rules. It checks for password strength, enforces password expiration, prevents password reuse, and locks the account after multiple failed login attempts. The system uses a SQLite database to store user information securely.
+Password Strength Validation:
 
-Features
+ Minimum password length of 12 characters. 🔑
+ Must contain at least one uppercase letter. 🅰️
+ Must contain at least one number. 🔢
+ Must contain at least one special character (e.g., !@#$%^&*). 🔣
+ Prevents the use of common passwords (e.g., "password", "123456"). 🚫
 
-Secure password validation with rules for length, special characters, and uppercase letters
+Password Expiration:
 
-Password must be at least 12 characters long
+ Passwords must be updated every 6 months. ⏳
 
-Password expiration after 6 months
+Password Reuse Prevention:
 
-Prevents password reuse
+ Users cannot reuse their previous password. 🔒
 
-Account locking after 3 failed login attempts
+Account Locking:
 
-Uses bcrypt for hashing passwords
+ Accounts are locked after 3 consecutive failed login attempts. 🔐
 
-SQLite database integration to store user credentials
+SQLite Database Integration:
 
-Technologies Used
+ Stores user information, including username, password hash, and login attempt details. 💾
 
-Python: Core programming language
+bcrypt:
 
-SQLite: Lightweight database for storing user data
+ Securely hashes passwords before storing them in the database. 🛡️
 
-bcrypt: Secure password hashing
+Technologies Used 💻
 
-Installation
+ Python: Core programming language for the application logic. 🐍
+ bcrypt: Library for securely hashing passwords. 🔐
+ SQLite: Lightweight database for storing user credentials and login attempt details. 🗃️
 
-Clone the repository:
+Installation ⚡
+ 1. Clone the repository:
 
-git clone https://github.com/Saurabh-Bane19/Password-Validator.git
+   git clone https://github.com/Saurabh-Bane19/Password-Validator.git
 
-Navigate to the project directory:
+ 2. Navigate to the project directory:
 
-cd Password-Validator
+   cd Password-Validator
 
-Set up a virtual environment:
+ 3. Set up a virtual environment:
+   
+   python -m venv venv
 
-python -m venv venv
+ 4. On Windows:
 
-Activate the virtual environment:
+   venv\Scripts\activate
 
-On Windows:
+   On macOS/Linux:
 
-venv\Scripts\activate
+   source venv/bin/activate
 
-On macOS/Linux:
 
-source venv/bin/activate
+ 5. Install dependencies:
+    
+    pip install -r requirements.txt
 
-Install dependencies:
+Usage 🚀
 
-pip install -r requirements.txt
+User Login with Failed Attempt Tracking 🔐
 
-Usage
+The system allows users to log in with their credentials. After 3 consecutive failed login attempts, the account will be locked. 
+Below is an example of how to log in a user with tracking for failed attempts and lock status:
 
-To test password validation and user login attempts, run the following command:
+import bcrypt
+import sqlite3
 
-python test_password_validation_failed_attempts.py
+# Function to handle user login with failed attempt tracking
+def login_user(username, password):
+    try:
+        # Fetch user data from database
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
 
-Expected Behavior:
+        if user is None:
+            print("Username not found!")
+            return
 
-Users can register and attempt login.
+        user_id, db_username, db_password_hash, failed_attempts, is_locked = user
 
-If the password is incorrect three times, the account gets locked.
+        print(f"Current failed_attempts: {failed_attempts}, is_locked: {is_locked}")  # Debugging output
 
-Password strength rules are enforced.
+        if is_locked:
+            print("Account is locked. Please contact IT support.")
+            return
 
-Contributing
+        # Check if the password is correct
+        if bcrypt.checkpw(password.encode('utf-8'), db_password_hash):
+            print("Login successful!")
+            # Reset failed attempts after successful login
+            cursor.execute("UPDATE users SET failed_attempts = 0 WHERE id = ?", (user_id,))
+            conn.commit()
+        else:
+            print("Incorrect password.")
+            failed_attempts += 1
+            if failed_attempts >= 3:
+                cursor.execute("UPDATE users SET is_locked = 1 WHERE id = ?", (user_id,))
+                print("Account is locked. Please contact IT support.")
+            else:
+                cursor.execute("UPDATE users SET failed_attempts = ? WHERE id = ?", (failed_attempts, user_id))
+            conn.commit()
 
-Contributions are welcome! Feel free to fork the repository and submit a pull request.
+        # Debugging: print updated status
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        updated_user = cursor.fetchone()
+        print(f"Updated user data: {updated_user}")  # Debugging output
+
+    except Exception as e:
+        print(f"Error during login: {e}")
+
+
+Example Usage 📝
+
+Test the system by logging in with both correct and incorrect passwords:
+
+login_user("newuser", "123456")  # Incorrect password example
+login_user("newuser", "incorrectPassword")  # Incorrect password again
+login_user("newuser", "incorrectPassword")  # Another incorrect attempt
+login_user("newuser", "securePassword123")  # Correct password example after failed attempts
+
+Check the Updated User Status 🔍
+
+You can check the updated user data to see the failed login attempts and whether the account is locked:
+
+cursor.execute("SELECT * FROM users WHERE username = ?", ("newuser",))
+user_data = cursor.fetchone()
+print(f"Updated user data: {user_data}")
+
+This will print the current state of the user, including failed login attempts and lock status.
+
+Contributing 🤝
+
+Contributions are welcome! Feel free to fork the repository, make changes, and submit a pull request.
+
+
+
